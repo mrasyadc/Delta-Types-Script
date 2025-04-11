@@ -9,6 +9,7 @@ def convert_struct_fields(struct_fields: str) -> str:
         "LongType()": "long",
         "FloatType()": "float",
         "IntegerType()": "integer",
+        "BooleanType()": "boolean"
     }
     
     # Regex pattern to extract field name and type
