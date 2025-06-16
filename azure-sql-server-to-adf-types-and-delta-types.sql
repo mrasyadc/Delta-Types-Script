@@ -29,22 +29,39 @@ SELECT
     data_type AS original_type,
     COALESCE(character_maximum_length, numeric_precision) AS LENGTH,
     numeric_scale AS scale,
-    -- Corrected struct_field with proper type names and trailing comma+backslash
+    -- Updated struct_field with precision/scale for DecimalType
     CONCAT(
         'StructField("', 
         column_name, 
         '", ',
         CASE
-            WHEN data_type IN ('bigint', 'int', 'smallint', 'tinyint') THEN 'Long'
-            WHEN data_type = 'bit' THEN 'Boolean'
-            WHEN data_type IN ('varchar', 'nvarchar', 'text', 'ntext', 'char', 'nchar', 'uniqueidentifier', 'json', 'time') THEN 'String'
-            WHEN data_type IN ('datetime', 'datetime2', 'smalldatetime') THEN 'Timestamp'
-            WHEN data_type IN ('float', 'real', 'decimal', 'numeric') THEN 'Decimal'
-            WHEN data_type = 'date' THEN 'Date'
-            WHEN data_type IN ('binary', 'varbinary', 'image') THEN 'Binary'
-            ELSE 'String'
+            WHEN data_type IN ('bigint', 'int', 'smallint', 'tinyint') THEN 'LongType()'
+            WHEN data_type = 'bit' THEN 'BooleanType()'
+            WHEN data_type IN ('varchar', 'nvarchar', 'text', 'ntext', 'char', 'nchar', 'uniqueidentifier', 'json', 'time') THEN 'StringType()'
+            WHEN data_type IN ('datetime', 'datetime2', 'smalldatetime') THEN 'TimestampType()'
+            WHEN data_type = 'date' THEN 'DateType()'
+            WHEN data_type IN ('binary', 'varbinary', 'image') THEN 'BinaryType()'
+            -- Handle DecimalType with precision/scale
+            WHEN data_type IN ('float', 'real') THEN 
+                'DecimalType(' || 
+                COALESCE(CAST(numeric_precision AS VARCHAR), '38') || 
+                ',' || 
+                COALESCE(CAST(numeric_scale AS VARCHAR), '18') || 
+                ')'
+            WHEN data_type IN ('decimal', 'numeric') THEN
+                CASE 
+                    WHEN COALESCE(numeric_precision, 0) = 0 AND COALESCE(numeric_scale, 0) = 0 
+                        THEN 'DecimalType(38,18)'
+                    ELSE 
+                        'DecimalType(' || 
+                        COALESCE(CAST(numeric_precision AS VARCHAR), '0') || 
+                        ',' || 
+                        COALESCE(CAST(numeric_scale AS VARCHAR), '0') || 
+                        ')'
+                END
+            ELSE 'StringType()'
         END,
-        'Type(), True), \\'  -- Added backslash for line continuation
+        ', True), \\'  -- Maintain backslash for line continuation
     ) AS struct_field
 FROM
     information_schema.COLUMNS
