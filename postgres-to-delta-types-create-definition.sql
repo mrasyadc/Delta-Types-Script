@@ -1,6 +1,8 @@
 select
     table_schema as TABSCHEMA,
     table_name as TABNAME,
+    column_name as COLNAME,
+    data_type as ORITYPE,
     'StructField("' || upper(column_name) || '", ' ||
     case
         when data_type = 'uuid' then 'StringType()'
@@ -13,7 +15,7 @@ select
             end
         when data_type = 'double precision' then 'FloatType()'
         when data_type = 'integer' then 'LongType()'
-        when data_type = 'timestamp without time zone' then 'TimestampType()'
+        when data_type = 'timestamp without time zone' then 'TimestampNTZType()'
         when data_type = 'timestamp with time zone' then 'TimestampType()'
         when data_type = 'character varying' then 'StringType()'
         when data_type = 'boolean' then 'BooleanType()'
@@ -28,7 +30,7 @@ select
 from
     information_schema.columns
 where
-    table_name in ('users', 'location', 'labors', 'conveyor_status', 'activity_plan_daily', 'activity_plan_weekly', 'activity_actual_daily', 'labor_activity_plan_daily', 'activity_actual_daily_labors', 'activity_plan_equipments', 'activity_plan_daily_equipments', 'activity_plan_weekly_equipments')
+    table_name in ('actual_loadings', 'actual_loading_cargo_loadeds')
 order by
     table_schema,
     table_name,
